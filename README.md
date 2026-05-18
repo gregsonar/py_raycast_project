@@ -1,6 +1,6 @@
 # 🎮 Raycast Pygame Renderer
 
-[![Language: Russian](https://shields.io)](README.ru.md)
+[![Language: Russian]](README.ru.md)
 
 A lightweight, fast, and optimized pseudo-3D raycaster engine built using Python, Pygame, and NumPy, featuring advanced post-processing visual effects.
 
