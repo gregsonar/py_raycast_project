@@ -21,7 +21,7 @@ A lightweight, fast, and optimized pseudo-3D raycaster engine built using Python
 #### Installation & Launch
 1. Clone the repository:
    ```bash
-   git clone https://github.com
+   git clone https://github.com/rikovmike/py_raycast_project.git
    cd py_raycast_project
    ```
 2. Install dependencies:
