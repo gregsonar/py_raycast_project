@@ -24,7 +24,7 @@ GOD_RAY_COUNT = 60
 
 # Управление
 MOUSE_SENSITIVITY = 0.003
-MOVE_SPEED = 0.07
+MOVE_SPEED = 2.1  # единиц карты в секунду
 
 # Карта по умолчанию (5×8)
 DEFAULT_MAP = [

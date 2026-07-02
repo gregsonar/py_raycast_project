@@ -51,8 +51,8 @@ class Game:
         self.clock = pg.time.Clock()
         self.running = True
 
-    def handle_input(self):
-        """Обработка ввода: события и клавиши."""
+    def handle_input(self, dt):
+        """Обработка ввода: события и клавиши. dt — время кадра в секундах."""
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.running = False
@@ -89,11 +89,11 @@ class Game:
         if 0 <= int(next_y) < self.renderer.map_h and \
                 0 <= int(self.player['x'] + dx * 0.3) < self.renderer.map_w and \
                 self.renderer.map[int(self.player['y']), int(self.player['x'] + dx * 0.3)] == 0:
-            self.player['x'] += dx * config.MOVE_SPEED
+            self.player['x'] += dx * config.MOVE_SPEED * dt
         if 0 <= int(self.player['y'] + dy * 0.3) < self.renderer.map_h and \
                 0 <= int(next_x) < self.renderer.map_w and \
                 self.renderer.map[int(self.player['y'] + dy * 0.3), int(self.player['x'])] == 0:
-            self.player['y'] += dy * config.MOVE_SPEED
+            self.player['y'] += dy * config.MOVE_SPEED * dt
 
         return is_firing
 
@@ -169,10 +169,10 @@ class Game:
     def run(self):
         """Главный цикл игры."""
         while self.running:
-            is_firing = self.handle_input()
+            dt = self.clock.tick(config.FPS) / 1000.0
+            is_firing = self.handle_input(dt)
             hit_info = None  # будет заполнено в renderer.render_walls
             self.render(is_firing, hit_info)
-            self.clock.tick(config.FPS)
 
         pg.quit()
 
