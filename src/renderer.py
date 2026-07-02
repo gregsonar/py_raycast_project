@@ -33,7 +33,11 @@ class Renderer:
         self.ray_mults = [random.uniform(0.5, 1.0)
                           for _ in range(config.GOD_RAY_COUNT)]
 
-    def render_floor_ceiling(self, frame, z_buf, px, py, pa):
+    def begin_frame(self):
+        """Сброс z-буфера перед рендерингом нового кадра."""
+        self.z_buffer.fill(99.0)
+
+    def render_floor_ceiling(self, frame, px, py, pa):
         """Отрисовка пола и потолка методом проекции."""
         rx0 = math.cos(pa - config.FOV)
         ry0 = math.sin(pa - config.FOV)
@@ -54,12 +58,12 @@ class Renderer:
 
             # Пол
             frame[:, y] = self.textures['floor'][tx, ty]
-            z_buf[:, y] = dist
+            self.z_buffer[:, y] = dist
 
             # Потолок (зеркально)
             ceiling_y = config.VIRT_HEIGHT - y - 1
             frame[:, ceiling_y] = self.textures['ceil'][tx, ty]
-            z_buf[:, ceiling_y] = dist
+            self.z_buffer[:, ceiling_y] = dist
 
     def cast_ray_dda(self, px, py, ray_angle, player_angle):
         """
@@ -98,7 +102,7 @@ class Renderer:
                 dist = (step_x - ddx if side == 0 else step_y - ddy) * math.cos(ray_angle - player_angle)
                 return mx, my, dist, side
 
-    def render_walls(self, frame, z_buf, px, py, pa):
+    def render_walls(self, frame, px, py, pa):
         """Отрисовка стен методом рейкастинга."""
         hit_info = None
 
@@ -137,7 +141,7 @@ class Renderer:
                 texture = self.textures.get(self.map[my, mx])
                 if texture is not None:
                     frame[x, y0:y1] = texture[tx % config.TEX_SIZE, v_coords % config.TEX_SIZE]
-                    z_buf[x, y0:y1] = dist
+                    self.z_buffer[x, y0:y1] = dist
 
             # Сохраняем информацию о попадании в центр экрана
             if x == config.VIRT_WIDTH // 2:
@@ -145,7 +149,7 @@ class Renderer:
 
         return hit_info
 
-    def apply_post_processing(self, frame, z_buf, focus, brightness, saturation_mult):
+    def apply_post_processing(self, frame, focus, brightness, saturation_mult):
         """
         Пост-обработка: виньетка, глубина резкости, насыщенность.
         :return: frame как uint8 для отрисовки
@@ -157,7 +161,7 @@ class Renderer:
 
         # Виньетка + затенение по глубине
         radial = np.exp(-focus * (xm ** 2 + ym ** 2))
-        depth_mask = np.exp(-0.3 * z_buf)
+        depth_mask = np.exp(-0.3 * self.z_buffer)
         light_mask = radial * depth_mask * brightness
 
         # Насыщенность: центр — цветной, края — ч/б

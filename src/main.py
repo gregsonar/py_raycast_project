@@ -132,21 +132,21 @@ class Game:
         """Полный цикл рендеринга кадра."""
         # Буферы
         frame = np.zeros((config.VIRT_WIDTH, config.VIRT_HEIGHT, 3), dtype=np.float32)
-        z_buf = np.full((config.VIRT_WIDTH, config.VIRT_HEIGHT), 99.0, dtype=np.float32)
+        self.renderer.begin_frame()
 
         # 1. Пол и потолок
-        self.renderer.render_floor_ceiling(frame, z_buf,
+        self.renderer.render_floor_ceiling(frame,
                                            self.player['x'], self.player['y'],
                                            self.player['angle'])
 
         # 2. Стены
-        hit_info = self.renderer.render_walls(frame, z_buf,
+        hit_info = self.renderer.render_walls(frame,
                                               self.player['x'], self.player['y'],
                                               self.player['angle'])
 
         # 3. Пост-обработка
         final = self.renderer.apply_post_processing(
-            frame, z_buf,
+            frame,
             focus=self.focus,
             brightness=self.brightness,
             saturation_mult=1.0
