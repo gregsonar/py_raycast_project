@@ -68,7 +68,11 @@ class Renderer:
     def cast_ray_dda(self, px, py, ray_angle, player_angle):
         """
         DDA-алгоритм трассировки луча.
-        :return: (hit_x, hit_y, distance, side) или None при выходе за границы
+        :return: (hit_x, hit_y, distance, raw_distance, side) или None
+                 при выходе за границы. distance скорректировано от
+                 "рыбьего глаза" (для высоты стен и z-буфера),
+                 raw_distance — истинное расстояние вдоль луча
+                 (для вычисления точки попадания).
         """
         rdx, rdy = math.cos(ray_angle), math.sin(ray_angle)
         mx, my = int(px), int(py)
@@ -98,9 +102,10 @@ class Renderer:
 
             # Попадание в стену
             if self.map[my, mx] > 0:
+                raw_dist = step_x - ddx if side == 0 else step_y - ddy
                 # Коррекция "рыбьего глаза"
-                dist = (step_x - ddx if side == 0 else step_y - ddy) * math.cos(ray_angle - player_angle)
-                return mx, my, dist, side
+                dist = raw_dist * math.cos(ray_angle - player_angle)
+                return mx, my, dist, raw_dist, side
 
     def render_walls(self, frame, px, py, pa):
         """Отрисовка стен методом рейкастинга."""
@@ -113,17 +118,18 @@ class Renderer:
             if result is None:
                 continue
 
-            mx, my, dist, side = result
+            mx, my, dist, raw_dist, side = result
             rdx, rdy = math.cos(ray_angle), math.sin(ray_angle)
 
             # Высота стены на экране
             wall_height = int(config.VIRT_HEIGHT / (dist + 0.0001))
 
-            # Координата текстуры по ширине
+            # Координата текстуры по ширине — по истинному расстоянию
+            # вдоль луча, скорректированное занижает её к краям экрана
             if side == 0:
-                wall_hit = py + dist * rdy
+                wall_hit = py + raw_dist * rdy
             else:
-                wall_hit = px + dist * rdx
+                wall_hit = px + raw_dist * rdx
             tx = int((wall_hit % 1) * config.TEX_SIZE)
 
             # Вертикальный диапазон отрисовки
@@ -143,9 +149,10 @@ class Renderer:
                     frame[x, y0:y1] = texture[tx % config.TEX_SIZE, v_coords % config.TEX_SIZE]
                     self.z_buffer[x, y0:y1] = dist
 
-            # Сохраняем информацию о попадании в центр экрана
+            # Сохраняем информацию о попадании в центр экрана;
+            # точка попадания — по истинному расстоянию вдоль луча
             if x == config.VIRT_WIDTH // 2:
-                hit_info = (px + dist * rdx, py + dist * rdy, dist)
+                hit_info = (px + raw_dist * rdx, py + raw_dist * rdy, dist)
 
         return hit_info
 
